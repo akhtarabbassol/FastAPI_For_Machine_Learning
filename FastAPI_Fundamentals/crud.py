@@ -1,7 +1,7 @@
 from fastapi import FastAPI,Path, HTTPException
 from fastapi.responses import  JSONResponse
 from pydantic import BaseModel,Field,computed_field
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 import json
 app = FastAPI()
 
@@ -34,6 +34,13 @@ class patient(BaseModel):
             return "Obese"
 
 
+class patientupdate(BaseModel):
+    name:Annotated[Optional[str], Field(default = None)]
+    city:Annotated[Optional[str], Field(defaul = None)]
+    age: Annotated[Optional[int], Field(default = None)]
+    gender:Annotated[Optional[str], Literal['male','female','other'], Field(default = None)]
+    height:Annotated[Optional[float], Field(default = None)]
+    weight:Annotated[Optional[float], Field(default = None)]
 
 def load_data():
     with open("patients.json", 'r') as f:
@@ -78,3 +85,19 @@ def create_patient(patient:patient):
     data[patient.id] = patient.model_dump(exclude=['id'])
     save_data(data)
     return JSONResponse(status_code = 201, content = {"message":"patient created successfully"})
+
+
+
+
+@app.delete('/delete/{patient_id}')
+
+def delete_patient(patient_id)->str:
+    data = load_data()
+    if patient_id not in data:
+        raise HTTPException(status_code = 404, detail=("patient not found"))
+
+    del data[patient_id]
+    save_data(data)
+
+    return JSONResponse(status_code = 200, content={"message":"Patient delete Successfully"})
+    
